@@ -1,0 +1,189 @@
+---
+title: "Prices of Detached Houses"
+author: "I. N 7184"
+date: "October 26, 2020"
+output: html_document
+---
+
+```{r, include = FALSE}
+library(tidyverse)
+set.seed(7184) # set the seed
+r<-read.csv("real20.csv") # read the csv file
+data<-r[sample(nrow(r), 200), ] # choose 200 random rows from the csv file
+attach(data) # use column names as variables in this session
+options(warn=-1) # warning messages
+options(digits = 4) # four decimal points
+```
+
+## I. Exploratory Data Analysis
+
+**Use a single plot to describe your data. Create a subset of your data by**
+**removing at most two cases and briefly explain your choice.**
+
+```{r, echo=FALSE}
+# plot the first graph that we want
+p <- ggplot(data, aes(x=list,y=sold))+geom_point()+geom_smooth(method=lm)+ 
+  labs(title="Scatterplot of Sold to List prices")
+suppressMessages(print(p)) # suppress the geom_smooth message
+data <- data[data$list < 3 | data$sold > 2, ] # remove the two points
+``` 
+
+I removed the two outlier points below the line (at around [3, 1.3] and 
+[6.8, 0.7]). At around their given sold prices, their list prices were 
+very large in comparison to the rest, thus affecting the regression line
+for this data set.
+
+**Then using the data subset for this and the remaining parts of this**
+**assignment, draw two scatterplots of the response variable- sale price by**
+**(i) list price and then (ii) taxes. In each plot, distinguish between**
+**properties in neighbourhood M and those in neighbourhood T, and include a**
+**legend/key**
+
+```{r, echo=FALSE}
+# create SLR for later
+ltotal = lm(list~sold, data = data)
+# plot the data for sold-list prices
+q <- ggplot(data, aes(x=list,y=sold,color=location))+geom_point()+
+  geom_smooth(method=lm)+labs(title="Scatterplot of Sold to List prices", 
+                              x = "List Prices", y = "Sold Prices", 
+                              color = "Location")+
+  scale_color_manual(labels=c("Mississauga", "Toronto"), values=c("darkorange",
+                                                              "darkturquoise"))
+suppressMessages(print(q))
+# plot the data for sold-taxes prices
+r <- ggplot(data, aes(x=taxes,y=sold,color=location))+geom_point()+
+  geom_smooth(method=lm)+labs(title="Scatterplot of Sold to Tax prices",
+                              x = "Taxes", y = "Sold Prices", 
+                              color = "Location")+
+  scale_color_manual(labels=c("Mississauga", "Toronto"), values=c("darkorange", 
+                                                               "darkturquoise"))
+suppressMessages(print(r)) # supress geom_smooth messages
+```
+
+**Interpret each of the three plots produced in this part, that is, describe**
+**at least one major highlight from each plot. Each highlight should differ**
+**from the other.**
+
+In the first graph, one highlight we see is that there is an obvious linear
+trend in the points (apart from two outliers).
+In the Sold to List prices of the second graph, we see that once the outliers
+have been removed, the confidence interval (shaded region) has shrunk, meaning 
+the two outliers made a difference in our data.
+In the Sold to Taxes prices of the third graph, the confidence interval is very
+large and we also see a more exaggerated difference showing that Toronto homes
+have a higher sold price than those in Mississauga.
+
+## II. Methods and Model
+
+**Carry out three simple linear regressions (SLR) for sale price from list**
+**price, one for all data, one for properties of neighbourhood M and another**
+**for properties of neighbourhood T. In a table, give the values of the**
+**following for each of these regressions: R squared, the estimated intercept,**
+**the estimated slope, the estimate of the variance of the error term, the**
+**p-value for the test with null hypothesis that the slope is 0, a 95%**
+**confidence interval for the slope parameter**
+
+```{r, echo=FALSE}
+# all needed data for table for Total data points
+sumTot = summary(ltotal)
+coeffTot = sumTot$coefficients
+confTot = confint(ltotal, "sold", level = 0.95)
+
+# all needed data for table for Mississauga data points
+mississauga = data[data$location == "M", ]
+lmis = lm(list~sold, data = mississauga)
+sumMis = summary(lmis)
+coeffMis = sumMis$coefficients
+confMis = confint(lmis, "sold", level = 0.95)
+
+# all needed data for table for Mississauga data points
+toronto = data[data$location == "T", ]
+ltor = lm(list~sold, data = toronto)
+sumTor = summary(ltor)
+coeffTor = sumTor$coefficients
+confTor = confint(ltor, "sold", level = 0.95)
+
+# make table
+results <- matrix(c(sumTot$r.squared, sumMis$r.squared, sumTor$r.squared,
+                    coeffTot[1], coeffMis[1], coeffTor[1],
+                    coeffTot[2], coeffMis[2], coeffTor[2],
+                    (sumTot$sigma)^2, (sumMis$sigma)^2, (sumTor$sigma)^2,
+                    coeffTot[8], coeffMis[8], coeffTor[8],
+                    confTot[1], confMis[1], confTor[1],
+                    confTot[2], confMis[2], confTor[2]), ncol=3, byrow=TRUE)
+# names of rows
+rownames(results) <- c("R squared", "Intercept Estimate", "Slope Estimate", 
+                       "Variance of Error Estimate",
+                       "p-value: Null Hypothesis slope = 0",
+                       "95% Confidence Interval Lower Bound", 
+                       "95% Confidence Interval Upper Bound")
+# names of columns
+colnames(results) <- c("Total", "Mississauga", "Toronto")
+results <- as.table(results)
+# print the table
+results
+```
+
+**Interpret and compare the three R squared values. Give a brief explanation**
+**why they appear similar or different**
+
+The three R squared values are relatively high (above 0.975) so, this means that
+if there are leverage points, they are considered good leverage points. This is
+because over 97.5% of the data fits the regression model. Because Mississauga
+homes have a higher R squared than Toronto and the Total, we can say that the
+regression model fits Mississauga homes better than Toronto homes. A brief
+graphical explanation as to why they appear similar, is because all of the data
+originally looked relatively linear (once I removed the two points from above).
+Their linearity meant that a regression line would fit the data accurately.
+
+**Briefly discuss whether a pooled two-sample t-test can be used to determine**
+**if there is a statistically significant difference between the slopes of the**
+**simple linear models for the two neighborhoods. (Note: You do not need to**
+**carry out a pooled two-sample t- test here.)**
+
+A pooled two-sample t-test cannot be used here to determine if there is a 
+statistically significant difference between the slopes of the simple linear
+models for the two neighbourhoods. We can use the two-sample t-test to test the
+difference between the two means but not the two slopes. This is because the two
+-sample t-test is categorical and not quantitative.
+
+## III. Discussions and Limitations
+
+**A sensible data science approach is to base inferences or conclusions only**
+**on valid models.**
+
+*Select one of the three fitted models in part II and give a brief*
+*explanation for your choice.*
+
+I choose to use the Mississauga neighborhood because its R squared value is
+the greatest. The variance of the error is the lowest and its p-value is less
+than 0.001 so, there is very strong evidence against the Null Hypothesis. This
+means that of the three, the data fits the best with this regression line, the
+errors vary the least, and a very strong suggestion that you can reject this
+Null Hypothesis for the whole population.
+
+*Discuss whether there are any violations of the normal error SLR assumptions*
+*for your selected model. Use at most two plots.*
+
+```{r, echo=FALSE}
+# plot the ones I want, this being the first and third graphs
+par(mfrow=c(1,2))
+plot(lmis, c(1,3))
+```
+
+In the Residual vs Fitted graph, we see there is no trend, or a Null plot. This
+suggests that the model is linear. In the Scale-Location plot, we also see that
+there is no trend, or another Null plot. This shows homoscedasticity, that the 
+errors have a constant variance. Since the first three normal error SLR
+assumptions are followed, we do not necessarily need to check the fourth
+condition because we are dealing with a very large sample size of 91. 
+Anyways, the Normal Q-Q plot of the standardized residuals shows an approximate
+linear trend however, this is not a problem as I have already mentioned that we
+are dealing with a very large sample size so little can be determined.
+
+*Identify two potential numeric predictors (other than those given in the data*
+*set) that could be used to fit a multiple linear regression for sale price.*
+
+1) Distance or Time it takes to commute to work/school
+
+2) Size of Property

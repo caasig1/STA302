@@ -1,0 +1,92 @@
+---
+title: "Sale Price for Detached Homes in the GTA"
+author: "I. N 7184"
+date: "December 4, 2020"
+output: html_document
+---
+
+## I. Data Wrangling
+
+##### a) Set the seed of your randomization to be your student number. Randomly select a sample of 150 cases. Report the IDs of the sample selected. Use your sample data, for the following sections.
+
+```{r, include = FALSE}
+set.seed(1004817184) # set the seed
+r<-read.csv("real203.csv") # read the csv file
+data_IN<-r[sample(nrow(r), 150), ] # choose 150 random rows from the csv file
+# Used _IN for initials and customization
+data_original <- data_IN # for the IDs at the bottom
+library(skimr)
+library(tidyverse)
+options(warn=-1) # warning messages
+options(digits = 4) # four decimal points
+mapping <- c("T" = 0, "M" = 1) # T and M into 0 and 1
+data_IN$location <- mapping[data_IN$location]
+```
+
+IDs reported at bottom under Appendix for visual aesthetic reasons.
+
+##### b) Create a new variable with the name ‘lotsize’ by multiplying lotwidth by lotlength. Use this new variable to replace lotwidth and lotlength.
+
+
+##### c) Clean the data by removing at most eleven cases and one predictor. Briefly explain your choices. Then use this updated data for the successive parts of this assignment.
+
+I want to remove maxsqfoot because many of its values are missing data, which 
+would give us insufficient/inaccurate results.
+In terms of cases, I want to remove the two cases missing values for lotsize and
+the 7 missing values for parking as seen in the skim reading below.
+
+```{r, echo = TRUE}
+skim(data_IN)
+data_IN <- select(data_IN, -c(maxsqfoot)) # removing maxsqfoot
+attach(data_IN) # column names are not changed after this point
+rows <- cbind(ID, sale, list, bedroom, bathroom, parking, taxes, lotwidth, lotlength, 
+              location)
+data_IN <- na.omit(rows) # removing NA values
+data_IN <- data.frame(data_IN)
+```
+
+## II. Exploratory Data Analysis
+
+##### a) Classify each variable included in this assignment as categorical or discrete or continuous.
+
+From the graphs below, we can tell that location is the only categorical
+variable in our dataset.
+
+The ID, bedroom, bathroom, and parking seem to be discrete since we can see a
+somewhat grid-like or bar-like pattern in the scatterplots below.
+
+The remaining variables seem to be continuous, which are sale, list, taxes and
+lotsize variables
+
+##### b) Produce the pairwise correlations and scatterplot matrix for all pairs of quantitative variables in the data. Describe how each quantitative predictor for sale price rank, in terms their correlation coefficient, from highest to lowest.
+
+```{r, echo = FALSE}
+# pairs creates the plots
+pairs(sale~ID+list+bedroom+bathroom+parking+taxes+lotwidth+lotlength+location, data=data_IN
+      , gap = 0.4, cex.labels = 0.85)
+# this is for correlation coefficients
+numericxy=cbind(sale, ID, list, bedroom, bathroom, parking, taxes, lotwidth, lotlength, location)
+round(cor(numericxy, use = "complete.obs"), 4)
+```
+
+The best correlated predictor to the sale price is the list price, with a
+correlation coefficient of 0.98. The rest, in descending order, would be:
+taxes, bathroom, bedroom, lotsize, ID, location, parking. Notice that parking
+is not the smallest value, but it is the closest to 0, which indicates its
+lack of correlation to the sale price.
+
+##### c) Based on the scatterplot matrix, for which single predictor of sale price would the assumption of constant variance be strongly violated? Confirm your answer by showing an appropriate plot of the (standardized) residuals.
+
+I would assume that bedroom predictor would violate the constant variance
+assumption. From the graph below, we see that there seems to be a non-horizontal
+pattern which indicates a non-constant variance. Looking at the residuals, more
+of the points at each increasing Fitted value seem to spread wider and wider, 
+indicated by the upwards sloping line below.
+
+```{r, echo = FALSE}
+# getting the title required
+model <- lm(sale~lotwidth, data = data_IN)
+par(mfrow=c(1,1))
+plot(model, c(3), main = "Scale-Location Sale~Lotwidth - 1004817184")
+```
+

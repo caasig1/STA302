@@ -1,0 +1,120 @@
+---
+title: "Arm length vs. Height"
+author: "I. N 7184"
+date: "September 26, 2020"
+output: html_document
+---
+
+```{r, include = FALSE}
+library(tidyverse)
+set.seed(7184) # set the seed
+r<-read.csv("a20a1data.csv") # read the csv file
+data<-r[sample(nrow(r), 10), ] # choose 10 random rows from the csv file
+attach(data) # use column names as variables in this session
+```
+
+## I. Introduction 
+
+##### Using words, give a title to summarise what your assignment #1 is about.
+##### This title should also be the title of your RMarkdown file.
+
+##### Describe how your sample data was collected.
+
+In class, we were put into several breakout rooms, where we discussed the
+lengths of our forearms and heights. Unfortunately, I wanted to wait for the
+data file instead so, I did not write down these values and will be using the
+a20a1data.csv file. As per the instructions, I have set the sedd to be the last
+four digits of my student number (7184) and randomly sampled 10 data points.
+
+##### Specify your explanatory variable and response variable and, give a brief
+##### explanation of your choice
+
+The response, or the dependent variable is the arm length, while the
+explanatory, or independent variable is the height. This is because arm length
+should be based on the height of a person; depending on how tall a person is,
+we can assume, or try to guess, their forearm length.
+
+## II. Exploratory Data Analysis
+
+##### Draw at most 3 plots to visually describe your data. Is your response
+##### variable approximately Normal?
+
+```{r, echo=FALSE}
+# summary of the data
+summary(data)
+# creating the SLR
+lmod=lm(forearm~height)
+# plot the data
+ggplot(data, aes(x=height,y=forearm))+geom_point()+geom_smooth(method=lm)+ 
+  labs(title="Scatterplot of Forearm to Height Ratio")
+# qq plot to show normality
+qqnorm(data$forearm, main="Normal QQ Plot for Forearm in cm", cex=0.5)
+qqline(data$forearm)
+```
+
+Yes, the response variable, ignoring one out-lier, seems to be fairly normal
+and gathered around the center of the qq normal plot, which dictates that the
+response variable is likely Normally distributed.
+
+##### Numerically describe the centre, spread and any unusual points of your
+##### variables/data.
+
+The center, or median, seems to be at 23.25cm for Forearm length while it is
+around 166.0cm for Height. The spread, about the 1st and 3rd quartile, seems to
+be between 21.25cm-27.75cm for Forearm length and 162.5cm-173.8cm for Height. 
+There are a few unusual points, one being (177, 40)
+and another being (157, 16). I refuse to believe someone has a forearm length of
+40 cm, so there seems to be quite some error in some of the student inputs for
+the survey. 
+
+## III. Methods and Model
+
+##### Fit and describe a linear regression model between forearm length and
+##### height.
+
+```{r, echo=FALSE}
+# creating the SLR
+lmod=lm(forearm~height)
+# show the summary of the line
+summary(lmod)
+```
+
+The error seems to be quite large, since some of the points (notably (177, 40))
+are quite far away from the SLR model.
+
+##### Are the regression parameters zero?
+
+No, the Y intercept variable is not zero, as seen in the summary window. The 
+intercept parameter is -77.2078. The slope parameter is 0.6126.
+
+##### Interpret the estimates of the regression parameters
+
+Because the Y intercept is below zero, nor is it close to zero, it is reasonable
+to say that perhaps the relation between forearm and height is not linear. Since
+the value of the y-intercept is very negative (estimated to be around -77.2),
+one could assume that if the relation were indeed linear, then either the data
+provided was very incorrect, or there were out-lier people. Also, the p-value is rounded to 0.0434 as we can see on the summary page.
+
+## IV. Discussions and Limitations
+
+##### Identify a potential lurking variable. Describe at least one other issue
+##### or limitation of your fit. You may include at most one plot to support
+##### your answer here.
+
+As we can see above, there are obviously some outliers. This time I want to look
+at the lower outlier, around (157, 16). Had there been an injury or disability
+regarding the forearm of an individual, their data would be outliers, since
+their forearm may be much shorter or longer than normal. Another issue with
+the data given is that perhaps the instructions were unclear and their data was
+input as inches instead of cm, thus making that data look incorrect when using
+a different unit of measurement.
+
+##### Identify another pair of variables to explore a simple linear regression
+##### model. Specify the response variable.
+
+Another possible pair of variables to explore a simple linear regression model 
+would be the relationship between height and status. Under the lens of one's
+status, whether it be rich or poor or in a first/third world country, we can
+look at how much one's height is affected. This would have potential since 
+the more affluent have greater access to better nutrients. The response variable
+in this case is height while the explanatory variable would be their status.
